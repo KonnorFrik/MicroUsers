@@ -10,6 +10,7 @@ import (
     "os"
     "log"
     "fmt"
+    "github.com/gin-gonic/gin"
 )
 
 const (
@@ -27,7 +28,11 @@ var (
 )
 
 func main() {
+    router := gin.Default()
 
+    router.GET("/hello", HandlerHello)
+
+    router.Run(server_address_http)
 }
 
 func init() {
@@ -38,6 +43,8 @@ func init() {
 
     server_address_http = fmt.Sprintf("%s:%d", server_ip, server_port_http)
     server_address_https = fmt.Sprintf("%s:%d", server_ip, server_port_https)
+
+    // gin.SetMode(gin.ReleaseMode)
 
     log.Printf("Server           PID: '%d'\n", os.Getgid())
     log.Printf("Server http  address: '%s'\n", server_address_http)
