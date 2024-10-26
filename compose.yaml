@@ -1,6 +1,31 @@
+name: microuser
+
 services:
+  redis:
+    image: redis:latest
+    hostname: redis
+    restart: on-failure
+
+  postgres:
+    image: postgres
+    hostname: postgres
+    restart: on-failure
+    environment:
+      POSTGRES_PASSWORD: "admin"
+    volumes:
+      - ./postgres_db:/var/lib/postgresql/data
+
   microuser:
     build: .
+    hostname: "microuser"
     ports:
       - "8000:8000"
       - "4430:4430"
+    links:
+      - redis:redis
+      - postgres:postgres
+    depends_on:
+      redis:
+        condition: service_started
+      postgres:
+        condition: service_started
