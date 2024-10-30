@@ -48,6 +48,11 @@ func (self *RedisCache) Get(key string) (string, error) {
 	return result, err
 }
 
+func (self *RedisCache) Save() error {
+    err := self.client.Save(self.ctx).Err()
+    return err
+}
+
 func (self *RedisCache) Close() {
 	self.client.Close()
 }

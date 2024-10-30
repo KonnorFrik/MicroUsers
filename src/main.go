@@ -45,6 +45,13 @@ func main() {
 	router.POST("/user/email", HandlerGetByEmail)
 
 	router.Run(server_address_http)
+
+    // On exit
+    err := Cache.Save()
+
+    if err != nil {
+        log.Printf("[CACHE ERROR]: On save: %v\n", err)
+    }
 }
 
 func init() {

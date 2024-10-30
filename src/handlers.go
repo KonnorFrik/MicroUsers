@@ -4,12 +4,16 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
     "fmt"
+	"github.com/go-redis/redis/v8"
+    "time"
 )
 
+// TODO: delete
 func HandlerHello(ctx *gin.Context) {
 	ctx.String(http.StatusOK, "Hello string")
 }
 
+// TODO: delete
 func HandlerPing(ctx *gin.Context) {
 	pong, err := Cache.Ping()
 
@@ -46,22 +50,7 @@ func HandlerRegister(ctx *gin.Context) {
 		return
 	}
 
-	newToken, err := GenerateToken()
-
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	// TODO: create a func for generate and save token on id, and id on token
-	//err = Cache.Set(newToken, newId, 0)
-
-	//if err != nil {
-		//ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		//return
-	//}
-
-	err = Cache.Set(fmt.Sprintf("%d", newId), newToken, 0)
+	newToken, err := CreateSetNewToken(newId, 0)
 
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -100,19 +89,18 @@ func HandlerLogin(ctx *gin.Context) {
 
 	if err != nil {
 		// call func generate and save new token
-		userToken, err = GenerateToken()
+        if err == redis.Nil {
+            userToken, err = CreateSetNewToken(userInDb.Id, 0)
 
-		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
+            if err != nil {
+                ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+                return
+            }
 
-        err = Cache.Set(fmt.Sprintf("%d", userInDb.Id), userToken, 0)
-
-		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
+        } else {
+            ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+            return
+        }
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{"token": userToken})
@@ -139,4 +127,22 @@ func HandlerGetByEmail(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, user)
+}
+
+// -------- Utils --------
+
+func CreateSetNewToken(id uint, expiration time.Duration) (string, error) {
+    token, err := GenerateToken()
+
+    if err != nil {
+        return "", err
+    }
+
+    err = Cache.Set(fmt.Sprintf("%d", id), token, expiration)
+
+    if err != nil {
+        return "", err
+    }
+
+    return token, nil
 }
