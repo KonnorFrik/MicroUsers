@@ -5,6 +5,8 @@ services:
     image: redis:latest
     hostname: redis
     restart: on-failure
+    volumes:
+      - ./cache_db:/data
 
   postgres:
     image: postgres
